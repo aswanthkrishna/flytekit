@@ -13,7 +13,6 @@ from flytekit.extend import TaskPlugins
 from flytekit.image_spec.image_spec import ImageSpec
 from flytekit.extend.backend.base_agent import AgentBase, AgentRegistry, AsyncAgentExecutorMixin
 
-
 @dataclass
 class MMCloudConfig(object):
     """
@@ -22,6 +21,7 @@ class MMCloudConfig(object):
 
     # This allows the user to specify additional arguments for the float submit command
     submit_extra: str = ""
+    cloud : str = "aws"
 
 
 class SkyPilotTask(AsyncAgentExecutorMixin, PythonFunctionTask):
