@@ -86,4 +86,5 @@ async def async_check_output(*args, **kwargs):
     returncode = process.returncode
     if returncode != 0:
         raise subprocess.CalledProcessError(returncode, shlex.join(args), output=stdout, stderr=stderr)
+    print(stdout)
     return stdout

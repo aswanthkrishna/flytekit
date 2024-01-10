@@ -10,8 +10,9 @@ from flytekit.configuration import SerializationSettings
 from flytekit.core.python_function_task import PythonFunctionTask
 from flytekit.core.resources import Resources
 from flytekit.extend import TaskPlugins
+from flytekit.extend.backend.base_agent import AsyncAgentExecutorMixin
 from flytekit.image_spec.image_spec import ImageSpec
-from flytekit.extend.backend.base_agent import AgentBase, AgentRegistry, AsyncAgentExecutorMixin
+
 
 @dataclass
 class MMCloudConfig(object):
@@ -21,10 +22,10 @@ class MMCloudConfig(object):
 
     # This allows the user to specify additional arguments for the float submit command
     submit_extra: str = ""
-    cloud : str = "aws"
+    cloud: str = "aws"
 
 
-class SkyPilotTask(AsyncAgentExecutorMixin, PythonFunctionTask):
+class SkyPilotTask(PythonFunctionTask):
     _TASK_TYPE = "skypilot_task"
 
     def __init__(

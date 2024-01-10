@@ -6,9 +6,9 @@ from tempfile import NamedTemporaryFile
 from typing import Optional
 
 import grpc
-from flyteidl.admin.agent_pb2 import CreateTaskResponse, DeleteTaskResponse, GetTaskResponse, Resource
-from flytekitplugins.skypilot.utils import async_check_output, mmcloud_status_to_flyte_state
-from flytekitplugins.skypilot.provider import get_cloud_provider, LoginManager
+import sky
+from flyteidl.admin.agent_pb2 import CreateTaskResponse
+from flytekitplugins.skypilot.provider import LoginManager
 
 from flytekit import current_context
 from flytekit.extend.backend.base_agent import AgentBase, AgentRegistry
@@ -17,12 +17,12 @@ from flytekit.models.literals import LiteralMap
 from flytekit.models.task import TaskTemplate
 
 
-import sky
-from sky import global_user_state, check
-
 @dataclass
 class Metadata:
     job_id: str
+
+
+logger.setLevel("DEBUG")
 
 
 class SkyPilotAgent(AgentBase):
@@ -35,126 +35,96 @@ class SkyPilotAgent(AgentBase):
         Log in to cloud providers of choice.
         """
         LoginManager.login(current_context().secrets)
-        # try:
-        #     # If already logged in, this will reset the session timer
-        #     check.check()
-        #     enabled_clouds = global_user_state.get_enabled_clouds()
-        #     print(enabled_clouds)
-        #     # login_info_command = ["sky", "check"]
-        #     # await async_check_output(*login_info_command)
-        # except SystemExit:
-        #     print("no clouds enabled")
-        #     secrets = current_context().secrets
-        #     try:
-        #         aws_access_key_id=secrets.get("aws", "aws_access_key_id")
-        #         aws_secret_access_key=secrets.get("aws", "aws_secret_access_key")
 
-        #         if aws_access_key_id and aws_secret_access_key:
-        #             provider = get_cloud_provider("aws")
-        #             provider.login()
-        #     except ValueError:
-        #         print("cant find aws credentials")
-        # except subprocess.CalledProcessError:
-        #     logger.info("Attempting to log in to OpCenter")
-        #     try:
-        #         secrets = current_context().secrets
-        #         login_command = [
-        #             "float",
-        #             "login",
-        #             "--address",
-        #             secrets.get("mmc_address"),
-        #             "--username",
-        #             secrets.get("mmc_username"),
-        #             "--password",
-        #             secrets.get("mmc_password"),
-        #         ]
-        #         await async_check_output(*login_command)
-        #     except subprocess.CalledProcessError:
-        #         logger.exception("Failed to log in to OpCenter")
-        #         raise
+    async def async_create(
+        self,
+        context: grpc.ServicerContext,
+        output_prefix: str,
+        task_template: TaskTemplate,
+        inputs: Optional[LiteralMap] = None,
+    ) -> CreateTaskResponse:
+        """
+        Submit Flyte task as MMCloud job to the OpCenter, and return the job UID for the task.
+        """
+        submit_command = [
+            "float",
+            "submit",
+            "--force",
+            *self._response_format,
+        ]
 
-        #     logger.info("Logged in to OpCenter")
+        # We do not use container.resources because FlytePropeller will impose limits that should not apply to MMCloud
+        min_cpu, min_mem, max_cpu, max_mem = task_template.custom["resources"]
+        submit_command.extend(["--cpu", f"{min_cpu}:{max_cpu}"] if max_cpu else ["--cpu", f"{min_cpu}"])
+        submit_command.extend(["--mem", f"{min_mem}:{max_mem}"] if max_mem else ["--mem", f"{min_mem}"])
 
-    
-    # async def async_create(
-    #     self,
-    #     context: grpc.ServicerContext,
-    #     output_prefix: str,
-    #     task_template: TaskTemplate,
-    #     inputs: Optional[LiteralMap] = None,
-    # ) -> CreateTaskResponse:
-    #     """
-    #     Submit Flyte task as MMCloud job to the OpCenter, and return the job UID for the task.
-    #     """
-    #     submit_command = [
-    #         "float",
-    #         "submit",
-    #         "--force",
-    #         *self._response_format,
-    #     ]
+        container = task_template.container
 
-    #     # We do not use container.resources because FlytePropeller will impose limits that should not apply to MMCloud
-    #     min_cpu, min_mem, max_cpu, max_mem = task_template.custom["resources"]
-    #     submit_command.extend(["--cpu", f"{min_cpu}:{max_cpu}"] if max_cpu else ["--cpu", f"{min_cpu}"])
-    #     submit_command.extend(["--mem", f"{min_mem}:{max_mem}"] if max_mem else ["--mem", f"{min_mem}"])
+        image = container.image
+        submit_command.extend(["--image", image])
 
-    #     container = task_template.container
+        env = container.env
+        for key, value in env.items():
+            submit_command.extend(["--env", f"{key}={value}"])
 
-    #     image = container.image
-    #     submit_command.extend(["--image", image])
+        submit_extra = task_template.custom["submit_extra"]
+        submit_command.extend(shlex.split(submit_extra))
 
-    #     env = container.env
-    #     for key, value in env.items():
-    #         submit_command.extend(["--env", f"{key}={value}"])
+        args = task_template.container.args
+        script_lines = ["docker", "run", "--rm", image, shlex.join(args)]
 
-    #     submit_extra = task_template.custom["submit_extra"]
-    #     submit_command.extend(shlex.split(submit_extra))
+        task_id = task_template.id
+        print(script_lines)
+        try:
+            # float binary takes a job file as input, so one must be created
+            # Use a uniquely named temporary file to avoid race conditions and clutter
+            with NamedTemporaryFile(mode="w", suffix=".sh") as job_file:
+                job_file.writelines(script_lines)
+                # Flush immediately so that the job file is usable
+                job_file.flush()
+                logger.debug("Wrote job script")
 
-    #     args = task_template.container.args
-    #     script_lines = ["#!/bin/bash\n", f"{shlex.join(args)}\n"]
+                submit_command.extend(["--job", job_file.name])
+                logger.info(f"Attempting to submit Flyte task {task_id} as SkyPilot job")
+                logger.debug(f"With command: {submit_command}")
 
-    #     task_id = task_template.id
-    #     try:
-    #         # float binary takes a job file as input, so one must be created
-    #         # Use a uniquely named temporary file to avoid race conditions and clutter
-    #         with NamedTemporaryFile(mode="w") as job_file:
-    #             job_file.writelines(script_lines)
-    #             # Flush immediately so that the job file is usable
-    #             job_file.flush()
-    #             logger.debug("Wrote job script")
+                try:
+                    await self.async_login()
 
-    #             submit_command.extend(["--job", job_file.name])
+                    task = sky.Task(docker_image=image, envs=env, run=shlex.join(script_lines)).set_resources(
+                        sky.Resources(cpus=f"{min_cpu}+", memory=f"{min_mem}+")
+                    )
 
-    #             logger.info(f"Attempting to submit Flyte task {task_id} as MMCloud job")
-    #             logger.debug(f"With command: {submit_command}")
-    #             try:
-    #                 await self.async_login()
-    #                 submit_response = await async_check_output(*submit_command)
-    #                 submit_response = json.loads(submit_response.decode())
-    #                 job_id = submit_response["id"]
-    #             except subprocess.CalledProcessError as e:
-    #                 logger.exception(
-    #                     f"Failed to submit Flyte task {task_id} as MMCloud job\n"
-    #                     f"[stdout] {e.stdout.decode()}\n"
-    #                     f"[stderr] {e.stderr.decode()}\n"
-    #                 )
-    #                 raise
-    #             except (UnicodeError, json.JSONDecodeError):
-    #                 logger.exception(f"Failed to decode submit response for Flyte task: {task_id}")
-    #                 raise
-    #             except KeyError:
-    #                 logger.exception(f"Failed to obtain MMCloud job id for Flyte task: {task_id}")
-    #                 raise
+                    print(submit_command)
+                    job_id, _ = sky.launch(task, down=True)
+                    print(job_id)
 
-    #             logger.info(f"Submitted Flyte task {task_id} as MMCloud job {job_id}")
-    #             logger.debug(f"OpCenter response: {submit_response}")
-    #     except OSError:
-    #         logger.exception("Cannot open job script for writing")
-    #         raise
+                    # submit_response = await async_check_output(*submit_command)
+                    # submit_response = json.loads(submit_response.decode())
+                    # job_id = submit_response["id"]
+                except subprocess.CalledProcessError as e:
+                    logger.exception(
+                        f"Failed to submit Flyte task {task_id} as MMCloud job\n"
+                        f"[stdout] {e.stdout.decode()}\n"
+                        f"[stderr] {e.stderr.decode()}\n"
+                    )
+                    raise
+                except (UnicodeError, json.JSONDecodeError):
+                    logger.exception(f"Failed to decode submit response for Flyte task: {task_id}")
+                    raise
+                except KeyError:
+                    logger.exception(f"Failed to obtain MMCloud job id for Flyte task: {task_id}")
+                    raise
 
-    #     metadata = Metadata(job_id=job_id)
+                # logger.info(f"Submitted Flyte task {task_id} as MMCloud job {job_id}")
+                # logger.debug(f"OpCenter response: {submit_response}")
+        except OSError:
+            logger.exception("Cannot open job script for writing")
+            raise
 
-    #     return CreateTaskResponse(resource_meta=json.dumps(asdict(metadata)).encode("utf-8"))
+        metadata = Metadata(job_id=job_id)
+
+        return CreateTaskResponse(resource_meta=json.dumps(asdict(metadata)).encode("utf-8"))
 
     # async def async_get(self, context: grpc.ServicerContext, resource_meta: bytes) -> GetTaskResponse:
     #     """
