@@ -4,7 +4,7 @@ PLUGIN_NAME = "skypilot"
 
 microlib_name = f"flytekitplugins-{PLUGIN_NAME}"
 
-plugin_requires = ["flytekit>=1.9.1,<2.0.0", "skypilot-nightly[all]"]
+plugin_requires = ["flytekit>=1.9.1,<2.0.0"]
 
 __version__ = "0.0.0+develop"
 
