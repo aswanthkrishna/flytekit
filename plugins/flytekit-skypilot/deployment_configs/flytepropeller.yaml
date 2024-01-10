@@ -1,0 +1,248 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: flyte-propeller-config
+  namespace: flyte
+  uid: 972a896f-34b7-480b-931a-2601526e8b99
+  resourceVersion: '18582'
+  creationTimestamp: '2024-01-10T11:15:13Z'
+  labels:
+    app.kubernetes.io/instance: flyte-core
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: flyteadmin
+    helm.sh/chart: flyte-core-v1.10.6
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: >
+      {"apiVersion":"v1","data":{"admin.yaml":"admin:\n  clientId:
+      'flytepropeller'\n  clientSecretLocation: /etc/secrets/client_secret\n 
+      endpoint: flyteadmin:81\n  insecure: true\nevent:\n  capacity: 1000\n 
+      rate: 500\n  type: admin\n","cache.yaml":"cache:\n  max_size_mbs: 0\n 
+      target_gc_percent: 70\n","catalog.yaml":"catalog-cache:\n  endpoint:
+      datacatalog:89\n  insecure: true\n  type:
+      datacatalog\n","copilot.yaml":"plugins:\n  k8s:\n    co-pilot:\n     
+      image: cr.flyte.org/flyteorg/flytecopilot-release:v1.10.6\n      name:
+      flyte-copilot-\n      start-timeout: 30s\n","core.yaml":"manager:\n 
+      pod-application: flytepropeller\n  pod-template-container-name:
+      flytepropeller\n  pod-template-name:
+      flytepropeller-template\npropeller:\n  downstream-eval-duration: 30s\n 
+      enable-admin-launcher: true\n  leader-election:\n    enabled: true\n   
+      lease-duration: 15s\n    lock-config-map:\n      name:
+      propeller-leader\n      namespace: flyte\n    renew-deadline: 10s\n   
+      retry-period: 2s\n  limit-namespace: all\n  max-workflow-retries: 30\n 
+      metadata-prefix: metadata/propeller\n  metrics-prefix: flyte\n  prof-port:
+      10254\n  queue:\n    batch-size: -1\n    batching-interval: 2s\n   
+      queue:\n      base-delay: 5s\n      capacity: 1000\n      max-delay:
+      120s\n      rate: 100\n      type: maxof\n    sub-queue:\n      capacity:
+      100\n      rate: 10\n      type: bucket\n    type: batch\n 
+      rawoutput-prefix: s3://my-s3-bucket/\n  workers: 4\n 
+      workflow-reeval-duration: 30s\nwebhook:\n  certDir: /etc/webhook/certs\n 
+      serviceName: flyte-pod-webhook\n","enabled_agents.yaml":"agents:\n 
+      agent-service:\n    agents:\n      agent-service:\n        endpoint:
+      agent-service.svc.cluster.local:9000\n        insecure:
+      true\n    supportedTaskTypes:\n    - skypilot_task\n   
+      agentForTaskTypes:\n    - skypilot_task:
+      agent-service\n","enabled_plugins.yaml":"tasks:\n  task-agents:\n   
+      enabled-agents:\n      - agent-service\n    default-for-task-types:\n     
+      - skypilot_task: agent-service\n  task-plugins:\n   
+      default-for-task-types:\n      container: container\n     
+      container_array: k8s-array\n      sidecar: sidecar\n      skypilot_task:
+      agent-service\n    enabled-plugins:\n    - container\n    -
+      sidecar\n    - k8s-array\n    -
+      agent-service\n","k8s.yaml":"plugins:\n  k8s:\n    default-cpus:
+      100m\n    default-env-vars:\n    - FLYTE_AWS_ENDPOINT:
+      http://minio.flyte.svc.cluster.local:9000\n    - FLYTE_AWS_ACCESS_KEY_ID:
+      minio\n    - FLYTE_AWS_SECRET_ACCESS_KEY: miniostorage\n   
+      default-memory: 200Mi\n  agent-service:\n    defaultGrpcEndpoint:
+      agent-service.svc.cluster.local:9000\n   
+      supportedTaskTypes:\n    -
+      skypilot_task\n","resource_manager.yaml":"propeller:\n 
+      resourcemanager:\n    redis: null\n    type:
+      noop\n","storage.yaml":"storage:\n  type: minio\n  container:
+      \"my-s3-bucket\"\n  stow:\n    kind: s3\n    config:\n      access_key_id:
+      minio\n      auth_type: accesskey\n      secret_key: miniostorage\n     
+      disable_ssl: true\n      endpoint:
+      http://minio.flyte.svc.cluster.local:9000\n      region: us-east-1\n 
+      signedUrl:\n    stowConfigOverride:\n      endpoint:
+      http://localhost:30084\n  enable-multicontainer: false\n  limits:\n   
+      maxDownloadMBs: 10\n","task_logs.yaml":"plugins:\n  logs:\n   
+      cloudwatch-enabled: false\n    kubernetes-enabled: true\n   
+      kubernetes-template-uri: http://localhost:30082/#/log/{{ .namespace }}/{{
+      .podName }}/pod?namespace={{ .namespace
+      }}\n"},"kind":"ConfigMap","metadata":{"annotations":{"meta.helm.sh/release-name":"flyte-core","meta.helm.sh/release-namespace":"flyte"},"creationTimestamp":"2024-01-10T11:15:13Z","labels":{"app.kubernetes.io/instance":"flyte-core","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"flyteadmin","helm.sh/chart":"flyte-core-v1.10.6"},"managedFields":[{"apiVersion":"v1","fieldsType":"FieldsV1","fieldsV1":{"f:data":{".":{},"f:admin.yaml":{},"f:cache.yaml":{},"f:catalog.yaml":{},"f:copilot.yaml":{},"f:core.yaml":{},"f:resource_manager.yaml":{},"f:storage.yaml":{},"f:task_logs.yaml":{}},"f:metadata":{"f:annotations":{".":{},"f:meta.helm.sh/release-name":{},"f:meta.helm.sh/release-namespace":{}},"f:labels":{".":{},"f:app.kubernetes.io/instance":{},"f:app.kubernetes.io/managed-by":{},"f:app.kubernetes.io/name":{},"f:helm.sh/chart":{}}}},"manager":"helm","operation":"Update","time":"2024-01-10T11:15:13Z"},{"apiVersion":"v1","fieldsType":"FieldsV1","fieldsV1":{"f:data":{"f:enabled_plugins.yaml":{},"f:k8s.yaml":{}},"f:metadata":{"f:annotations":{"f:kubectl.kubernetes.io/last-applied-configuration":{}}}},"manager":"kubectl-client-side-apply","operation":"Update","time":"2024-01-10T12:41:30Z"}],"name":"flyte-propeller-config","namespace":"flyte","resourceVersion":"14927","uid":"972a896f-34b7-480b-931a-2601526e8b99"}}
+    meta.helm.sh/release-name: flyte-core
+    meta.helm.sh/release-namespace: flyte
+  managedFields:
+    - manager: helm
+      operation: Update
+      apiVersion: v1
+      time: '2024-01-10T11:15:13Z'
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          .: {}
+          f:admin.yaml: {}
+          f:cache.yaml: {}
+          f:catalog.yaml: {}
+          f:copilot.yaml: {}
+          f:core.yaml: {}
+          f:resource_manager.yaml: {}
+          f:storage.yaml: {}
+          f:task_logs.yaml: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:meta.helm.sh/release-name: {}
+            f:meta.helm.sh/release-namespace: {}
+          f:labels:
+            .: {}
+            f:app.kubernetes.io/instance: {}
+            f:app.kubernetes.io/managed-by: {}
+            f:app.kubernetes.io/name: {}
+            f:helm.sh/chart: {}
+    - manager: kubectl-client-side-apply
+      operation: Update
+      apiVersion: v1
+      time: '2024-01-10T15:38:20Z'
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:data:
+          f:enabled_agents.yaml: {}
+          f:enabled_plugins.yaml: {}
+          f:k8s.yaml: {}
+        f:metadata:
+          f:annotations:
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+data:
+  admin.yaml: |
+    admin:
+      clientId: 'flytepropeller'
+      clientSecretLocation: /etc/secrets/client_secret
+      endpoint: flyteadmin:81
+      insecure: true
+    event:
+      capacity: 1000
+      rate: 500
+      type: admin
+  cache.yaml: |
+    cache:
+      max_size_mbs: 0
+      target_gc_percent: 70
+  catalog.yaml: |
+    catalog-cache:
+      endpoint: datacatalog:89
+      insecure: true
+      type: datacatalog
+  copilot.yaml: |
+    plugins:
+      k8s:
+        co-pilot:
+          image: cr.flyte.org/flyteorg/flytecopilot-release:v1.10.6
+          name: flyte-copilot-
+          start-timeout: 30s
+  core.yaml: |
+    manager:
+      pod-application: flytepropeller
+      pod-template-container-name: flytepropeller
+      pod-template-name: flytepropeller-template
+    propeller:
+      downstream-eval-duration: 30s
+      enable-admin-launcher: true
+      leader-election:
+        enabled: true
+        lease-duration: 15s
+        lock-config-map:
+          name: propeller-leader
+          namespace: flyte
+        renew-deadline: 10s
+        retry-period: 2s
+      limit-namespace: all
+      max-workflow-retries: 30
+      metadata-prefix: metadata/propeller
+      metrics-prefix: flyte
+      prof-port: 10254
+      queue:
+        batch-size: -1
+        batching-interval: 2s
+        queue:
+          base-delay: 5s
+          capacity: 1000
+          max-delay: 120s
+          rate: 100
+          type: maxof
+        sub-queue:
+          capacity: 100
+          rate: 10
+          type: bucket
+        type: batch
+      rawoutput-prefix: s3://my-s3-bucket/
+      workers: 4
+      workflow-reeval-duration: 30s
+    webhook:
+      certDir: /etc/webhook/certs
+      serviceName: flyte-pod-webhook
+  enabled_plugins.yaml: |
+    tasks:
+      task-agents:
+        enabled-agents:
+          - agent-service
+        default-for-task-types:
+          - skypilot_task: agent-service
+      task-plugins:
+        default-for-task-types:
+          container: container
+          container_array: k8s-array
+          sidecar: sidecar
+          skypilot_task: agent-service
+        enabled-plugins:
+        - container
+        - sidecar
+        - k8s-array
+        - agent-service
+  k8s.yaml: |
+    plugins:
+      k8s:
+        default-cpus: 100m
+        default-env-vars:
+        - FLYTE_AWS_ENDPOINT: http://minio.flyte.svc.cluster.local:9000
+        - FLYTE_AWS_ACCESS_KEY_ID: minio
+        - FLYTE_AWS_SECRET_ACCESS_KEY: miniostorage
+        default-memory: 200Mi
+      agent-service:
+        agents:
+          agent-service:
+            endpoint: agent-service.flyte.svc.cluster.local:8000
+            insecure: true
+        supportedTaskTypes:
+        - skypilot_task
+        agentForTaskTypes:
+        - skypilot_task: agent-service
+  resource_manager.yaml: |
+    propeller:
+      resourcemanager:
+        redis: null
+        type: noop
+  storage.yaml: |
+    storage:
+      type: minio
+      container: "my-s3-bucket"
+      stow:
+        kind: s3
+        config:
+          access_key_id: minio
+          auth_type: accesskey
+          secret_key: miniostorage
+          disable_ssl: true
+          endpoint: http://minio.flyte.svc.cluster.local:9000
+          region: us-east-1
+      signedUrl:
+        stowConfigOverride:
+          endpoint: http://localhost:30084
+      enable-multicontainer: false
+      limits:
+        maxDownloadMBs: 10
+  task_logs.yaml: |
+    plugins:
+      logs:
+        cloudwatch-enabled: false
+        kubernetes-enabled: true
+        kubernetes-template-uri: http://localhost:30082/#/log/{{ .namespace }}/{{ .podName }}/pod?namespace={{ .namespace }}
